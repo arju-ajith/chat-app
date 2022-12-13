@@ -131,9 +131,10 @@ class HomePage extends GetView<HomePageController> {
                           child: Padding(
                             padding: const EdgeInsets.only(left: 10, right: 10),
                             child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                               children: [
                                 SizedBox(
-                                  width: Get.size.width * 0.35,
+                                  width: Get.size.width * 0.25,
                                   child: TextField(
                                     style: const TextStyle(color: Colors.blue),
                                     onSubmitted: (value) {
@@ -155,7 +156,7 @@ class HomePage extends GetView<HomePageController> {
                                       controller.receiveButtonFun();
                                     }),
                                     icon: const Icon(
-                                      Icons.call_received,
+                                      Icons.fork_left,
                                     )))),
                                 Obx((() => IconButton(
                                     color: controller.senderOn.value
@@ -165,7 +166,7 @@ class HomePage extends GetView<HomePageController> {
                                       controller.sendButtonFun();
                                     }),
                                     icon: const Icon(
-                                      Icons.send,
+                                      Icons.fork_right,
                                     )))),
                                 IconButton(
                                     onPressed: (() {
@@ -173,13 +174,22 @@ class HomePage extends GetView<HomePageController> {
                                     }),
                                     icon: const Icon(Icons.photo)),
                                 IconButton(
-                                    onPressed: () {
-                                      controller.locationOnPress();
-                                    },
-                                    icon: Obx((() =>
-                                        controller.isLocationLoading.value
-                                            ? const CupertinoActivityIndicator()
-                                            : const Icon(Icons.location_on))))
+                                  onPressed: () {
+                                    controller.locationOnPress();
+                                  },
+                                  icon: Obx((() =>
+                                      controller.isLocationLoading.value
+                                          ? const CupertinoActivityIndicator()
+                                          : const Icon(Icons.location_on))),
+                                ),
+                                Obx((() =>
+                                    controller.deleteEntriesList.isNotEmpty
+                                        ? IconButton(
+                                            onPressed: (() {
+                                              controller.deleteEntries();
+                                            }),
+                                            icon: Icon(Icons.delete))
+                                        : SizedBox()))
                               ],
                             ),
                           ),
@@ -196,7 +206,9 @@ Widget receivedWidget(Message entry, VoidCallback updateController) {
   return Padding(
     padding: const EdgeInsets.all(8.0),
     child: InkWell(
-      onLongPress: () => updateController(),
+      onLongPress:
+          entry.isSelected.isFalse ? (() => updateController()) : (() {}),
+      onTap: entry.isSelected.isTrue ? (() => updateController()) : (() {}),
       child: Container(
         width: Get.size.width,
         color: entry.isSelected.isTrue ? Colors.grey : Colors.transparent,
@@ -244,9 +256,9 @@ Widget sendWidget(Message entry, VoidCallback updateController) {
   return Padding(
     padding: const EdgeInsets.all(8.0),
     child: InkWell(
-      onLongPress: () {
-        updateController();
-      },
+      onLongPress:
+          entry.isSelected.isFalse ? (() => updateController()) : (() {}),
+      onTap: entry.isSelected.isTrue ? (() => updateController()) : (() {}),
       child: Container(
         width: Get.size.width,
         color: entry.isSelected.isTrue ? Colors.grey : Colors.transparent,

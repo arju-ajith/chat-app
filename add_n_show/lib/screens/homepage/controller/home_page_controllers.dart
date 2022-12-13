@@ -12,6 +12,7 @@ class HomePageController extends GetxController {
   XFile? image;
   RxString tempString = RxString("");
   RxBool isLocationLoading = RxBool(false);
+  RxList<int> deleteEntriesList = RxList([]);
 
   Future imageOnPress() async {
     try {
@@ -20,13 +21,19 @@ class HomePageController extends GetxController {
         isImageSelected.value = true;
         tempString.value = image!.path;
       }
-    } on Exception catch (e) {
+    } catch (e) {
       throw Exception(e);
     }
   }
 
   void updateController(int index) {
     entries[index].isSelected(!entries[index].isSelected.value);
+    if (entries[index].isSelected.isTrue) {
+      deleteEntriesList.add(index);
+    }
+    if (entries[index].isSelected.isFalse) {
+      deleteEntriesList.remove(index);
+    }
   }
 
   void receivedMsg() {
@@ -37,8 +44,7 @@ class HomePageController extends GetxController {
       entryController.clear();
       image = null;
     } else {
-      Get.snackbar("", "Please enter the valid entry!",
-          snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar("", "Please enter the valid entry!", colorText: Colors.red);
     }
   }
 
@@ -50,8 +56,7 @@ class HomePageController extends GetxController {
       entryController.clear();
       image = null;
     } else {
-      Get.snackbar("", "Please enter the valid entry!",
-          snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar("", "Please enter the valid entry!", colorText: Colors.red);
     }
   }
 
@@ -140,5 +145,13 @@ class HomePageController extends GetxController {
 
   void imageCancel() {
     tempString("");
+  }
+
+  void deleteEntries() {
+    deleteEntriesList.sort();
+    deleteEntriesList.reversed.toList().forEach((element) {
+      entries.removeAt(element);
+    });
+    deleteEntriesList.clear();
   }
 }
