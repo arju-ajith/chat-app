@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:add_n_show/screens/homepage/controller/home_page_controllers.dart';
 import 'package:add_n_show/screens/homepage/model/message.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -19,12 +20,30 @@ class HomePage extends GetView<HomePageController> {
           child: Obx((() => controller.tempString.value.isNotEmpty
               ? Container(
                   decoration: BoxDecoration(
-                      image: DecorationImage(
-                          image: FileImage(File(controller.tempString.value)),
-                          fit: BoxFit.cover)),
+                    image: DecorationImage(
+                        image: FileImage(File(controller.tempString.value)),
+                        fit: BoxFit.cover),
+                  ),
                   child: Column(
                     children: [
-                      Spacer(),
+                      Row(
+                        children: [
+                          const Spacer(),
+                          Padding(
+                            padding: const EdgeInsets.all(50.0),
+                            child: IconButton(
+                                onPressed: (() {
+                                  controller.imageCancel();
+                                }),
+                                icon: const Icon(
+                                  Icons.cancel_sharp,
+                                  size: 50,
+                                  color: Colors.white,
+                                )),
+                          )
+                        ],
+                      ),
+                      const Spacer(),
                       Padding(
                         padding: const EdgeInsets.all(15.0),
                         child: Container(
@@ -91,8 +110,15 @@ class HomePage extends GetView<HomePageController> {
                           itemBuilder: ((context, index) {
                             return controller
                                     .isReceiver(controller.entries[index].type)
-                                ? receivedWidget(controller.entries[index])
-                                : sendWidget(controller.entries[index]);
+                                ? receivedWidget(controller.entries[index],
+                                    (() {
+                                    controller.updateController(index);
+                                    controller.entries.refresh();
+                                  }))
+                                : sendWidget(controller.entries[index], () {
+                                    controller.updateController(index);
+                                    controller.entries.refresh();
+                                  });
                           })))),
                     ),
                     Padding(
@@ -107,7 +133,7 @@ class HomePage extends GetView<HomePageController> {
                             child: Row(
                               children: [
                                 SizedBox(
-                                  width: Get.size.width * 0.50,
+                                  width: Get.size.width * 0.35,
                                   child: TextField(
                                     style: const TextStyle(color: Colors.blue),
                                     onSubmitted: (value) {
@@ -145,7 +171,15 @@ class HomePage extends GetView<HomePageController> {
                                     onPressed: (() {
                                       controller.imageOnPress();
                                     }),
-                                    icon: Icon(Icons.photo))
+                                    icon: const Icon(Icons.photo)),
+                                IconButton(
+                                    onPressed: () {
+                                      controller.locationOnPress();
+                                    },
+                                    icon: Obx((() =>
+                                        controller.isLocationLoading.value
+                                            ? const CupertinoActivityIndicator()
+                                            : const Icon(Icons.location_on))))
                               ],
                             ),
                           ),
@@ -158,84 +192,100 @@ class HomePage extends GetView<HomePageController> {
   }
 }
 
-Widget receivedWidget(Message entry) {
+Widget receivedWidget(Message entry, VoidCallback updateController) {
   return Padding(
     padding: const EdgeInsets.all(8.0),
-    child: Row(
-      children: [
-        Card(
-          clipBehavior: Clip.antiAlias,
-          shape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.only(
-                  topRight: Radius.circular(30),
-                  bottomLeft: Radius.circular(30),
-                  bottomRight: Radius.circular(30))),
-          child: Column(
-            children: [
-              entry.imagePath == null
-                  ? const SizedBox()
-                  : Container(
-                      height: Get.size.width * 0.30,
-                      width: Get.size.width * 0.45,
-                      decoration: BoxDecoration(
-                          image: DecorationImage(
-                              image: FileImage(File(entry.imagePath!)))),
-                    ),
-              entry.msg == null
-                  ? const SizedBox()
-                  : Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Text(
-                        entry.msg!,
-                        textAlign: TextAlign.start,
-                      ),
-                    ),
-            ],
-          ),
+    child: InkWell(
+      onLongPress: () => updateController(),
+      child: Container(
+        width: Get.size.width,
+        color: entry.isSelected.isTrue ? Colors.grey : Colors.transparent,
+        child: Row(
+          children: [
+            Card(
+              clipBehavior: Clip.antiAlias,
+              shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.only(
+                      topRight: Radius.circular(30),
+                      bottomLeft: Radius.circular(30),
+                      bottomRight: Radius.circular(30))),
+              child: Column(
+                children: [
+                  entry.imagePath == null
+                      ? const SizedBox()
+                      : Container(
+                          height: Get.size.width * 0.30,
+                          width: Get.size.width * 0.45,
+                          decoration: BoxDecoration(
+                              image: DecorationImage(
+                                  image: FileImage(File(entry.imagePath!)))),
+                        ),
+                  entry.msg == null
+                      ? const SizedBox()
+                      : Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text(
+                            entry.msg!,
+                            textAlign: TextAlign.start,
+                          ),
+                        ),
+                ],
+              ),
+            ),
+            const Spacer()
+          ],
         ),
-        const Spacer()
-      ],
+      ),
     ),
   );
 }
 
-Widget sendWidget(Message entry) {
+Widget sendWidget(Message entry, VoidCallback updateController) {
   return Padding(
     padding: const EdgeInsets.all(8.0),
-    child: Row(
-      children: [
-        const Spacer(),
-        Card(
-          clipBehavior: Clip.antiAlias,
-          shape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(30),
-                  bottomLeft: Radius.circular(30),
-                  bottomRight: Radius.circular(30))),
-          child: Column(
-            children: [
-              entry.imagePath == null
-                  ? const SizedBox()
-                  : Container(
-                      height: Get.size.width * 0.30,
-                      width: Get.size.width * 0.45,
-                      decoration: BoxDecoration(
-                          image: DecorationImage(
-                              image: FileImage(File(entry.imagePath!)))),
-                    ),
-              entry.msg == null
-                  ? const SizedBox()
-                  : Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Text(
-                        entry.msg!,
-                        textAlign: TextAlign.start,
-                      ),
-                    ),
-            ],
-          ),
-        )
-      ],
+    child: InkWell(
+      onLongPress: () {
+        updateController();
+      },
+      child: Container(
+        width: Get.size.width,
+        color: entry.isSelected.isTrue ? Colors.grey : Colors.transparent,
+        child: Row(
+          children: [
+            const Spacer(),
+            Card(
+              clipBehavior: Clip.antiAlias,
+              shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(30),
+                      bottomLeft: Radius.circular(30),
+                      bottomRight: Radius.circular(30))),
+              child: Column(
+                children: [
+                  entry.imagePath == null
+                      ? const SizedBox()
+                      : Container(
+                          height: Get.size.width * 0.30,
+                          width: Get.size.width * 0.45,
+                          decoration: BoxDecoration(
+                              image: DecorationImage(
+                                  image: FileImage(File(entry.imagePath!)))),
+                        ),
+                  entry.msg == null
+                      ? const SizedBox()
+                      : Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text(
+                            entry.msg!,
+                            textAlign: TextAlign.start,
+                          ),
+                        ),
+                ],
+              ),
+            )
+          ],
+        ),
+      ),
     ),
   );
 }
